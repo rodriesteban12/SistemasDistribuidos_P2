@@ -73,8 +73,9 @@ events {
 }
 http {
     upstream servers {
-         server 192.168.131.61;
-         server 192.168.131.62;
+         server 10.0.2.15.61;
+         server 10.0.2.15.62;
+         server 10.0.2.15.63;
     }
     server {
         listen 8080;
