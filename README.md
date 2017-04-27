@@ -2,7 +2,7 @@
 
 #### Nombre Estudiante: Andrés Felipe Piñeros
 #### Código Estudiante: A00273344
-#### Repositorio: https://github.com/AndresPineros/SD_P1_AFP
+#### Repositorio: https://github.com/AndresPineros/SistemasDistribuidos_P2
 
 ### Descripción
 Aprovisionamiento	de	un	ambiente	compuesto	por	los	siguientes	elementos:	un servidor	encargado de	realizar balanceo de	carga,	tres	servidores	web	con páginas estáticas. Se	debe probar	el	funcionamiento	del balanceador	realizando peticiones y mostrando servidores distintos atendiendo las peticiones.
