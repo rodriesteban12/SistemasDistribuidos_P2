@@ -324,9 +324,23 @@ http {
     upstream app_servers {
         server sol1_app_1:80;
         server sol1_app_2:80;
-            ....
-            ....
-            ....
+        server sol1_app_3:80;
+    }
+ 
+    server {
+        listen 80;
+ 
+        location / {
+            proxy_pass         http://app_servers;
+            proxy_redirect     off;
+            proxy_set_header   Host $host;
+            proxy_set_header   X-Real-IP $remote_addr;
+            proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header   X-Forwarded-Host $server_name;
+        }
+    }
+}
+
 ```
 y la aplicación web simplemente evitaría todo lo relacionado a los args de building.
 ```
@@ -342,19 +356,11 @@ sudo docker-compose build
 <p align="center">
   <img src="images/sol1_build.PNG" width="650"/>
 </p>
-Ahora se escalarán los contenedores web a la cantidad necesaria. En este caso 3:
+Ahora se escalarán los contenedores web a la cantidad necesaria (3) y el proxy de nginx a 1.
 ```
-sudo docker-compose scale app=3
+sudo docker-compose scale app=3 proxy=1
 ```
+Ahora quedó desplegado el servicio:
 <p align="center">
   <img src="images/sol1_scale.PNG" width="650"/>
 </p>
-Si se realiza un docker ps -a se pueden ver los 3 contenedores web:
-<p align="center">
-  <img src="images/sol1_afterscale.PNG" width="650"/>
-</p>
-Desafortunadamente parece que hay un bug en docker-compose y al intentar desplegar los servicios, elimina todos los contenedores web que no sean el número1.
-<p align="center">
-  <img src="images/sol1_fail.PNG" width="1000" height="300"/>
-</p>
-Se puede ver como los primeros pasos de la acción es eliminar los contenedores repetidos por el comando scale. Esta solución, para un entorno real sería mucho más eficiente.
