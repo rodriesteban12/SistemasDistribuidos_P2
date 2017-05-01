@@ -91,7 +91,7 @@ service nginx restart
 
 - Instalar dependencias de tecnologías
 ``` sh
-yum install httpd -y
+apt-get install httpd -y
 ```
 - Abrir puerto 80 para recibir peticiones http
 ``` sh
@@ -221,6 +221,42 @@ services:
       - app_2
       - app_3
 ```
+Ahora que se han creado los archivos es posible iniciar los servicios de los contenedores con los siguientes comandos:
+
+Personalmente me gusta dejar la opción de no cache mientras verifico que el sistema funciona correctamente. Cuando todo corre correctamente, quito el flag --no-cache para que el proceso de build sea más veloz.
+```
+sudo docker-compose build --no-cache
+```
+<p align="center">
+  <img src="images/sol2_build.png" width="650"/>
+</p>
+
+Idealmente el sistema debería correrse el sistema de forma dettached en un entorno de producción. Se puede ver cómo se crean los contenedores hasta que se encuentran listos para ser usados.
+```
+sudo docker-compose up -d
+```
+<p align="center">
+  <img src="images/sol2_dettachup.png" width="650"/>
+</p>
+Pero para fines ilustrativos lo correré sin el flag -d. En este caso se pueden ver todos los servicios expuestos por el compose, de tal forma que si algún servicio recibe una petición, podremos verlo en consola.
+```
+sudo docker-compose up
+```
+<p align="center">
+  <img src="images/sol2_attachup.png" width="650"/>
+</p>
+
+Ahora, el puerto que el contenedor de Nginx expone es el puerto 80, pero en mi máquina HOST ya lo tengo ocupado con otro servicio. Por lo tanto, en el docker-compose.yml se hizo binding de este puerto al 8080. Así con localhost:8080 se podrá acceder al servicio de balanceo de cargas que está apuntando a los servicios web:
+<p align="center">
+  <img src="images/sol2_app1.png" width="650"/>
+</p>
+<p align="center">
+  <img src="images/sol2_app2.png" width="650"/>
+</p>
+<p align="center">
+  <img src="images/sol2_app3.png" width="650"/>
+</p>
+
 
 ### 2.2 Otra posible solución
 
