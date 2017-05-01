@@ -66,8 +66,8 @@ http {
     }
  
     server {
-        listen 80;
- 
+        listen 8080;
+
         location / {
             proxy_pass         http://app_servers;
             proxy_redirect     off;
