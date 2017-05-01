@@ -114,6 +114,7 @@ sudo docker pull httpd:2.4
 ```
 Creamos el archivo Dockerfile para hacer build al nuevo contenedor que contendrá el archivo HTML de la página web.
 
+#### 2.1.1 Contenedores web
 ```
 #Dockerfile del httpd con archivo dinámico
 FROM httpd
@@ -130,6 +131,8 @@ El archivo de index.html es muy básico:
 Hell yeah!
 ```
 
+#### 2.1.2 Contenedor proxy
+
 ```
 #Se usa el contenedor con nginx pre instalado
 FROM nginx
@@ -141,6 +144,38 @@ ADD nginx.conf /etc/nginx/nginx.conf
 RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 CMD service nginx start
 ```
+El archivo de configuración de Nginx que se agrega es el siguiente.
+Se hace referencia a las aplicaciones por medio de los links del compose.
+En el upstream se agrega el puerto 80 de los contenedores web ya que el servicio es el httpd, que por default se expone en el puerto 80.
+```
+worker_processes 4;
+ 
+events { worker_connections 1024; }
+ 
+http {
+    sendfile on;
+ 
+    upstream app_servers {
+        server app_1:80;
+        server app_2:80;
+        server app_3:80;
+    }
+ 
+    server {
+        listen 80;
+ 
+        location / {
+            proxy_pass         http://app_servers;
+            proxy_redirect     off;
+            proxy_set_header   Host $host;
+            proxy_set_header   X-Real-IP $remote_addr;
+            proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header   X-Forwarded-Host $server_name;
+        }
+    }
+}
+```
+#### 2.1.3 Compose
 
 ```
 version: '3'
