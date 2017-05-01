@@ -243,7 +243,7 @@ Pero para fines ilustrativos lo correré sin el flag -d. En este caso se pueden 
 sudo docker-compose up
 ```
 <p align="center">
-  <img src="images/sol2_attachup.PNG" width="650" height="400"/>
+  <img src="images/sol2_attachup.PNG" width="800" height="400"/>
 </p>
 
 Ahora, el puerto que el contenedor de Nginx expone es el puerto 80, pero en mi máquina HOST ya lo tengo ocupado con otro servicio. Por lo tanto, en el docker-compose.yml se hizo binding de este puerto al 8080. Así con localhost:8080 se podrá acceder al servicio de balanceo de cargas que está apuntando a los servicios web:
