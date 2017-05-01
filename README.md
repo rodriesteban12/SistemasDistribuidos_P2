@@ -293,5 +293,7 @@ Creating sol1_app_2 ... done
 Creating sol1_app_3 ... done
 ```
 
-Si se realiza un docker ps -a se oyedeb ver los 3 contenedores web:
+Si se realiza un docker ps -a se pueden ver los 3 contenedores web:
 
+
+Desafortunadamente parece que hay un bug en docker-compose y al intentar desplegar los servicios, elimina todos los contenedores web que no sean el número1.
