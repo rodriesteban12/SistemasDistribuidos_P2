@@ -228,7 +228,7 @@ Personalmente me gusta dejar la opción de no cache mientras verifico que el sis
 sudo docker-compose build --no-cache
 ```
 <p align="center">
-  <img src="images/sol2_build.png" width="650"/>
+  <img src="images/sol2_build.PNG" width="650"/>
 </p>
 
 Idealmente el sistema debería correrse el sistema de forma dettached en un entorno de producción. Se puede ver cómo se crean los contenedores hasta que se encuentran listos para ser usados.
@@ -243,28 +243,34 @@ Pero para fines ilustrativos lo correré sin el flag -d. En este caso se pueden 
 sudo docker-compose up
 ```
 <p align="center">
-  <img src="images/sol2_attachup.png" width="650"/>
+  <img src="images/sol2_attachup.PNG" width="650"/>
 </p>
 
 Ahora, el puerto que el contenedor de Nginx expone es el puerto 80, pero en mi máquina HOST ya lo tengo ocupado con otro servicio. Por lo tanto, en el docker-compose.yml se hizo binding de este puerto al 8080. Así con localhost:8080 se podrá acceder al servicio de balanceo de cargas que está apuntando a los servicios web:
 <p align="center">
-  <img src="images/sol2_app1.png" width="650"/>
+  <img src="images/sol2_app1.PNG" width="650"/>
 </p>
 <p align="center">
-  <img src="images/sol2_app2.png" width="650"/>
+  <img src="images/sol2_app2.PNG" width="650"/>
 </p>
 <p align="center">
-  <img src="images/sol2_app3.png" width="650"/>
+  <img src="images/sol2_app3.PNG" width="650"/>
+</p>
+Se puede ver que por cada petición se accede al siguiente contenedor web. La razón por la que esto ocurre es que Nginx por default utiliza un algoritmo de balanceo llamado RoundRobin, que no es muy inteligente, pues simplemente distribuye en ciclos las peticiones. Otros algoritmos tienen en cuenta la verdadera carga que cada petición tiene sobre el servidor. Se puede visualizar el RoundRobin en la consola:
+
+<p align="center">
+  <img src="images/sol2_roundrobin.PNG" width="650"/>
 </p>
 
+Se ve como el ciclo es app1 -> app2 -> app3 -> app1 -> ...
 
 ### 2.2 Otra posible solución
 
-Es posible utilizar docker-compose para realizar una solución más elegante que permite realizar una mejor escalabilidad.
+Es posible utilizar docker-compose para realizar una solución más elegante que permite escalar sin necesidad de hacer build a múltiples contenedores web.
 
-En el docker-compose.yml únicamente se agregan los tipos de contenedores que se desean una única vez. Esto tiene el problema de que no permitirá que los nodos tengan páginas web diferentes, pero cuando se intenta escalar horizontalmente servicio, la idea es que todos sean identicos.
+En el docker-compose.yml se agregan los tipos de contenedores que se desean una única vez. Esto tiene el problema de que no permitirá que los nodos tengan páginas web diferentes, pero cuando se intenta escalar horizontalmente un servicio, la idea es que todos sean idénticos.
 
-La configuración de nginx es la misma y la aplicación web simplemente evitaría todo lo relacionado a los args de building.
+A continuación el nuevo docker-compose.yml:
 ```
 version: '2'
  
@@ -286,7 +292,7 @@ services:
       - app
 
 ```
-La configuración de nginx es la misma, únicamente se modifica el nombre de los contenedores web ya que tendrán como prefijo la carpeta en la que se encuentran. En este caso sol1 al ser la carpeta de la primera solución:
+La configuración de nginx es la misma, únicamente se modifica el nombre de los contenedores web ya que tendrán como prefijo la carpeta en la que se encuentra el docker-compose.yml. En este caso sol1 al ser la carpeta de la primera solución:
 ```
 worker_processes 4;
  
@@ -309,27 +315,26 @@ FROM httpd
 ADD index.html /usr/local/apache2/htdocs/index.html
 ```
 
-Se hace build de los contenedores. Esto es particularmente importante ya que no se repetirá la configuración de contenedores similares:
+Se hace build de los contenedores. Esto es particularmente importante ya que no se repetirá la configuración de contenedores web sino que se desplegarán desde una única imagen:
 ```
 sudo docker-compose build
 ```
-
+<p align="center">
+  <img src="images/sol1_build.PNG" width="650"/>
+</p>
 Ahora se escalarán los contenedores web a la cantidad necesaria. En este caso 3:
 ```
 sudo docker-compose scale app=3
 ```
-Que debe resultar en:
-```
-python_user@ubuntu1604:~/Documents/SistemasDistribuidos_P2/program/sol1$ sudo docker-compose scale app=3
-Creating sol1_app_1 ... 
-Creating sol1_app_2 ... 
-Creating sol1_app_3 ... 
-Creating sol1_app_1 ... done
-Creating sol1_app_2 ... done
-Creating sol1_app_3 ... done
-```
-
+<p align="center">
+  <img src="images/sol1_scale.PNG" width="650"/>
+</p>
 Si se realiza un docker ps -a se pueden ver los 3 contenedores web:
-
-
+<p align="center">
+  <img src="images/sol1_afterscale.PNG" width="650"/>
+</p>
 Desafortunadamente parece que hay un bug en docker-compose y al intentar desplegar los servicios, elimina todos los contenedores web que no sean el número1.
+<p align="center">
+  <img src="images/sol1_fail.PNG" width="650"/>
+</p>
+Se puede ver como los primeros pasos de la acción es eliminar los contenedores repetidos por el comando scale. Esta solución, para un entorno real sería mucho más eficiente.
