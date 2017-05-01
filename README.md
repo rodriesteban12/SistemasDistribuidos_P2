@@ -236,7 +236,7 @@ Idealmente el sistema debería correrse el sistema de forma dettached en un ento
 sudo docker-compose up -d
 ```
 <p align="center">
-  <img src="images/sol2_dettachup.PNG" width="650" style="transform: scale(1.5, 1.5);"/>
+  <img src="images/sol2_dettachup.PNG" width="1000"/>
 </p>
 Pero para fines ilustrativos lo correré sin el flag -d. En este caso se pueden ver todos los servicios expuestos por el compose, de tal forma que si algún servicio recibe una petición, podremos verlo en consola.
 ```
