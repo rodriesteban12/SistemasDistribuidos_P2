@@ -1,0 +1,41 @@
+version: '3'
+ 
+services:
+  app_1:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+      args:
+        - ARG1=App1
+    expose:
+      - "80"
+
+  app_2:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+      args:
+        - ARG1=App2
+    expose:
+      - "80"
+
+  app_3:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+      args:
+        - ARG1=App3
+    expose:
+      - "80"
+
+  proxy:
+    build:
+      context:  ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    links:
+      - app_1
+      - app_2
+      - app_3
+
