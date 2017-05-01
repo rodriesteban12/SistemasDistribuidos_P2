@@ -102,9 +102,29 @@ service iptables save
 
 
 # 2. Soluciones
-Realizar templates en Docker no es tan sencillo como en Vagrant. También es complicado simular estrategias para realizar templates sin romper las buenas prácticas de Docker. Por ejemplo, si se usan variables del entorno del contenedor para posteriormente modificar los archivos con el comando sed (simulando templates), tocaría ejecutar en el ENTRYPOINT todos los comandos para reemplazar los parámetros por los argumentos de building y además el comando de ejecución del servicio.
+Realizar templates en Docker no es tan sencillo como en Vagrant. Actualmente existen varias opciones para realizar templates en contenedores pero no son nativas de Docker o son técnicas llenas de malas prácticas. Por ejemplo:
+
+- Tiller: https://github.com/markround/tiller Es una buena herramienta pero hace más pesados los contenedores de Docker.
+- Confd: https://github.com/kelseyhightower/confd Es una mejor opción, pero aún así, no es nativa de Docker. Se explica cómo usarla aquí: https://theagileadmin.com/2015/11/12/templating-config-files-in-docker-containers/
+- Usar el conmando sed para modificar variables. Es una opción menos dependiente de otras librerías ya que lo implementa el mismo desarrollador pero para proyectos grandes puede convertirse en un problema.
+
+Un ejemplo de la última opción sería crear un archivo index.html
+```
+Hola soy el archivo HTML {PARAM1}
+```
+y en Dockerfile crear usar --build-arg para modificarlo. También se puede ejecutar esta acción en el ENTRYPOINT pero se caería en la mala práctica de ejecutar múltiples acciones (archivos .sh) en el entrypoint de docker. El archivo debería contener comandos para reemplazar todos los parámetros de los archivos y finalmente el comando que ejecuta el servicio.
+```
+ARG ARG1
+sed "s/ARG1/{PARAM1}/g" index.html
+```
 
 ### 2.1 Solución base
+
+Para la solución del ejercicio se hará algo más simple. No se intentará manejar el index.html como un template sino que simplemente se agregará contenido al final del archivo con 
+
+```
+echo "contenido" >> index.html
+```
 
 #### 2.1.1 Contenedores web
 
