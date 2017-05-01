@@ -128,7 +128,7 @@ echo "contenido" >> index.html
 
 #### 2.1.1 Contenedores web
 
-Para servir la página web utilizaré Apache2 (httpd) ya que tiene una configuración muy básica, aunque es un poco pesado.
+Para servir la página web utilizaré Apache2 (httpd) ya que tiene una configuración muy básica.
 
 Descargamos el contenedor que viene con httpd versión 2.4
 ```
