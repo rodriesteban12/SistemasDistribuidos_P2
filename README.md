@@ -81,15 +81,20 @@ service nginx restart
 ### 1.2 Máquinas Web
 
 - Instalar dependencias de tecnologías
-
 ``` sh
 yum install httpd -y
 ```
 - Abrir puerto 80 para recibir peticiones http
-
 ``` sh
 iptables -I INPUT 5 -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT
 service iptables save
 ```
 - Agregar el archivo de index que se entregara por el puerto 80
-- Crear el script de php que consultará la base de datos de mysql.
+
+
+# 2. Soluciones
+Claramente el problema a solucionar trata se enfoca en la parametrización de los contenedores. Todos los contenedores de la capa Web serán básicamente iguales y su única diferencia será el contenido de la página web estática. Desafortunadamente en Docker esto no es tan sencillo como en Vagrant. Por eso adjuntaré algunas de las soluciones que encontré en internet para este problema:
+
+### 2.1 Parametrizando el contenedor con variables de entorno que modifican el docker-compose
+
+
