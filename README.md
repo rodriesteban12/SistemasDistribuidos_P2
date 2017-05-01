@@ -105,7 +105,7 @@ service iptables save
 Realizar templates en Docker no es tan sencillo como en Vagrant. Actualmente existen varias opciones para realizar templates en contenedores pero no son nativas de Docker o son técnicas llenas de malas prácticas. Por ejemplo:
 
 - Tiller: https://github.com/markround/tiller Es una buena herramienta pero hace más pesados los contenedores de Docker.
-- Confd: https://github.com/kelseyhightower/confd Es una mejor opción, pero aún así, no es nativa de Docker. Se explica cómo usarla aquí: https://theagileadmin.com/2015/11/12/templating-config-files-in-docker-containers/
+- Confd: https://github.com/kelseyhightower/confd Es una mejor opción, pero aún así, no es nativa de Docker. Se explica cómo usarla aquí: https://theagileadmin.com/2015/11/12/templating-config-files-in-docker-containers/ También aquí: http://www.mricho.com/confd-and-docker-separating-config-and-code-for-containers/
 - Usar el conmando sed para modificar variables. Es una opción menos dependiente de otras librerías ya que lo implementa el mismo desarrollador pero para proyectos grandes puede convertirse en un problema.
 
 Un ejemplo de la última opción sería crear un archivo index.html
@@ -118,7 +118,7 @@ ARG ARG1
 sed "s/ARG1/{PARAM1}/g" index.html
 ```
 
-### 2.1 Solución base
+### 2.1 Primera Solución - Repetir contenedores en el docker-compose.yml
 
 Para la solución del ejercicio se hará algo más simple. No se intentará manejar el index.html como un template sino que simplemente se agregará contenido al final del archivo con 
 
@@ -284,7 +284,7 @@ Se puede ver que por cada petición se accede al siguiente contenedor web. La ra
 
 Se ve como el ciclo es app1 -> app2 -> app3 -> app1 -> ...
 
-### 2.2 Otra posible solución
+### 2.2 Segunda solución - Usar docker-compose scale
 
 Es posible utilizar docker-compose para realizar una solución más elegante que permite escalar sin necesidad de hacer build a múltiples contenedores web.
 
@@ -324,37 +324,45 @@ http {
     upstream app_servers {
         server sol1_app_1:80;
         server sol1_app_2:80;
-            ....
-            ....
-            ....
+        server sol1_app_3:80;
+    }
+ 
+    server {
+        listen 80;
+ 
+        location / {
+            proxy_pass         http://app_servers;
+            proxy_redirect     off;
+            proxy_set_header   Host $host;
+            proxy_set_header   X-Real-IP $remote_addr;
+            proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header   X-Forwarded-Host $server_name;
+        }
+    }
+}
+
 ```
 y la aplicación web simplemente evitaría todo lo relacionado a los args de building.
 ```
-#Dockerfile web del httpd con archivo dinámico
+#Dockerfile web del httpd con archivo ESTÁTICO
 FROM httpd
 ADD index.html /usr/local/apache2/htdocs/index.html
 ```
 
 Se hace build de los contenedores. Esto es particularmente importante ya que no se repetirá la configuración de contenedores web sino que se desplegarán desde una única imagen:
+
 ```
 sudo docker-compose build
 ```
 <p align="center">
   <img src="images/sol1_build.PNG" width="650"/>
 </p>
-Ahora se escalarán los contenedores web a la cantidad necesaria. En este caso 3:
+Ahora se escalarán los contenedores web a la cantidad necesaria (3) y el proxy de nginx a 1.
+
 ```
-sudo docker-compose scale app=3
+sudo docker-compose scale app=3 proxy=1
 ```
+Ahora quedó desplegado el servicio:
 <p align="center">
   <img src="images/sol1_scale.PNG" width="650"/>
 </p>
-Si se realiza un docker ps -a se pueden ver los 3 contenedores web:
-<p align="center">
-  <img src="images/sol1_afterscale.PNG" width="650"/>
-</p>
-Desafortunadamente parece que hay un bug en docker-compose y al intentar desplegar los servicios, elimina todos los contenedores web que no sean el número1.
-<p align="center">
-  <img src="images/sol1_fail.PNG" width="1000" height="300"/>
-</p>
-Se puede ver como los primeros pasos de la acción es eliminar los contenedores repetidos por el comando scale. Esta solución, para un entorno real sería mucho más eficiente.
