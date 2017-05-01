@@ -118,7 +118,7 @@ ARG ARG1
 sed "s/ARG1/{PARAM1}/g" index.html
 ```
 
-### 2.1 Solución base
+### 2.1 Primera Solución - Repetir contenedores en el docker-compose.yml
 
 Para la solución del ejercicio se hará algo más simple. No se intentará manejar el index.html como un template sino que simplemente se agregará contenido al final del archivo con 
 
@@ -284,7 +284,7 @@ Se puede ver que por cada petición se accede al siguiente contenedor web. La ra
 
 Se ve como el ciclo es app1 -> app2 -> app3 -> app1 -> ...
 
-### 2.2 Otra posible solución
+### 2.2 Segunda solución - Usar docker-compose scale
 
 Es posible utilizar docker-compose para realizar una solución más elegante que permite escalar sin necesidad de hacer build a múltiples contenedores web.
 
