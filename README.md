@@ -259,7 +259,7 @@ Ahora, el puerto que el contenedor de Nginx expone es el puerto 80, pero en mi m
 Se puede ver que por cada petición se accede al siguiente contenedor web. La razón por la que esto ocurre es que Nginx por default utiliza un algoritmo de balanceo llamado RoundRobin, que no es muy inteligente, pues simplemente distribuye en ciclos las peticiones. Otros algoritmos tienen en cuenta la verdadera carga que cada petición tiene sobre el servidor. Se puede visualizar el RoundRobin en la consola:
 
 <p align="center">
-  <img src="images/sol2_roundrobin.PNG" width="650"/>
+  <img src="images/sol2_roundrobin.PNG" width="1000" height="300"/>
 </p>
 
 Se ve como el ciclo es app1 -> app2 -> app3 -> app1 -> ...
@@ -335,6 +335,6 @@ Si se realiza un docker ps -a se pueden ver los 3 contenedores web:
 </p>
 Desafortunadamente parece que hay un bug en docker-compose y al intentar desplegar los servicios, elimina todos los contenedores web que no sean el número1.
 <p align="center">
-  <img src="images/sol1_fail.PNG" width="650"/>
+  <img src="images/sol1_fail.PNG" width="1000" height="300"/>
 </p>
 Se puede ver como los primeros pasos de la acción es eliminar los contenedores repetidos por el comando scale. Esta solución, para un entorno real sería mucho más eficiente.
