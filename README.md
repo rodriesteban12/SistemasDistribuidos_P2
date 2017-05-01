@@ -106,6 +106,8 @@ Realizar templates en Docker no es tan sencillo como en Vagrant. También es com
 
 ### 2.1 Solución base
 
+#### 2.1.1 Contenedores web
+
 Para servir la página web utilizaré Apache2 (httpd) ya que tiene una configuración muy básica, aunque es un poco pesado.
 
 Descargamos el contenedor que viene con httpd versión 2.4
@@ -113,8 +115,6 @@ Descargamos el contenedor que viene con httpd versión 2.4
 sudo docker pull httpd:2.4
 ```
 Creamos el archivo Dockerfile para hacer build al nuevo contenedor que contendrá el archivo HTML de la página web.
-
-#### 2.1.1 Contenedores web
 ```
 #Dockerfile del httpd con archivo dinámico
 FROM httpd
