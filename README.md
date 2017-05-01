@@ -104,7 +104,7 @@ service iptables save
 # 2. Soluciones
 Realizar templates en Docker no es tan sencillo como en Vagrant. También es complicado simular estrategias para realizar templates sin romper las buenas prácticas de Docker. Por ejemplo, si se usan variables del entorno del contenedor para posteriormente modificar los archivos con el comando sed (simulando templates), tocaría ejecutar en el ENTRYPOINT todos los comandos para reemplazar los parámetros por los argumentos de building y además el comando de ejecución del servicio.
 
-### 2.1 Parametrizando el contenedor con variables de entorno que modifican el docker-compose
+### 2.1 Solución base
 
 Para servir la página web utilizaré Apache2 (httpd) ya que tiene una configuración muy básica, aunque es un poco pesado.
 
@@ -221,4 +221,77 @@ services:
       - app_2
       - app_3
 ```
+
+### 2.2 Otra posible solución
+
+Es posible utilizar docker-compose para realizar una solución más elegante que permite realizar una mejor escalabilidad.
+
+En el docker-compose.yml únicamente se agregan los tipos de contenedores que se desean una única vez. Esto tiene el problema de que no permitirá que los nodos tengan páginas web diferentes, pero cuando se intenta escalar horizontalmente servicio, la idea es que todos sean identicos.
+
+La configuración de nginx es la misma y la aplicación web simplemente evitaría todo lo relacionado a los args de building.
+```
+version: '2'
+ 
+services:
+  app:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+    expose:
+      - "5000"
+ 
+  proxy:
+    build:
+      context:  ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    links:
+      - app
+
+```
+La configuración de nginx es la misma, únicamente se modifica el nombre de los contenedores web ya que tendrán como prefijo la carpeta en la que se encuentran. En este caso sol1 al ser la carpeta de la primera solución:
+```
+worker_processes 4;
+ 
+events { worker_connections 1024; }
+ 
+http {
+    sendfile on;
+ 
+    upstream app_servers {
+        server sol1_app_1:80;
+        server sol1_app_2:80;
+            ....
+            ....
+            ....
+```
+y la aplicación web simplemente evitaría todo lo relacionado a los args de building.
+```
+#Dockerfile web del httpd con archivo dinámico
+FROM httpd
+ADD index.html /usr/local/apache2/htdocs/index.html
+```
+
+Se hace build de los contenedores. Esto es particularmente importante ya que no se repetirá la configuración de contenedores similares:
+```
+sudo docker-compose build
+```
+
+Ahora se escalarán los contenedores web a la cantidad necesaria. En este caso 3:
+```
+sudo docker-compose scale app=3
+```
+Que debe resultar en:
+```
+python_user@ubuntu1604:~/Documents/SistemasDistribuidos_P2/program/sol1$ sudo docker-compose scale app=3
+Creating sol1_app_1 ... 
+Creating sol1_app_2 ... 
+Creating sol1_app_3 ... 
+Creating sol1_app_1 ... done
+Creating sol1_app_2 ... done
+Creating sol1_app_3 ... done
+```
+
+Si se realiza un docker ps -a se oyedeb ver los 3 contenedores web:
 
