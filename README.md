@@ -41,41 +41,26 @@ iptables -I INPUT 5 -p tcp -m state --state NEW -m tcp --dport 8080 -j ACCEPT
 service iptables save
 ```
 
-- Crear el archivo de configuración del repositorio de Nginx
-
-``` sh
-sudo vi /etc/yum.repos.d/nginx.repo
-```
-
-El archivo debe contener la siguiente configuración:
-
-``` sh
-[nginx]
-name=nginx repo
-baseurl=http://nginx.org/packages/centos/$releasever/$basearch/
-gpgcheck=0
-enabled=1
-```
 - Instalar Nginx
 
 ``` sh
-yum update nginx
-yum install nginx -y
+apt-get update nginx
+apt-get install nginx -y
 ```
 - Configurar el archivo de Nginx para balancear las cargas (`/etc/nginx/nginx.conf`)
 
 Actualmente el archivo tiene contenido. Este se debe reemplazar completamente por la siguiente configuración:
 
 ``` sh
-worker_processes  1;
+worker_processes  3;
 events {
    worker_connections 1024;
 }
 http {
     upstream servers {
-         server 10.0.2.15.61;
-         server 10.0.2.15.62;
-         server 10.0.2.15.63;
+         server myServerIP_1;
+         server myServerIP_2;
+         server myServerIP_3;
     }
     server {
         listen 8080;
@@ -85,7 +70,7 @@ http {
     }
 }
 ```
-En este archivo se definen los servidores a los que el balanceador de carga apuntará. Específicamente a los servidores con ip `192.168.131.61` y `...62`. También se define el puerto de escucha del balanceador de cargas. En este caso, ya que el puerto 80 se encuentra actualmente en uso, se usará el puerto 8080.
+En este archivo se definen los servidores a los que el balanceador de carga apuntará. También se define el puerto de escucha del balanceador de cargas. En este caso, ya que el puerto 80 se encuentra actualmente en uso, se usará el puerto 8080.
 
 - Reiniciar servicio de Nginx
 
@@ -99,9 +84,6 @@ service nginx restart
 
 ``` sh
 yum install httpd -y
-yum install php -y
-yum install php-mysql -y
-yum install mysql -y
 ```
 - Abrir puerto 80 para recibir peticiones http
 
