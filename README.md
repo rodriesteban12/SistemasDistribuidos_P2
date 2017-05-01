@@ -105,7 +105,7 @@ service iptables save
 Realizar templates en Docker no es tan sencillo como en Vagrant. Actualmente existen varias opciones para realizar templates en contenedores pero no son nativas de Docker o son técnicas llenas de malas prácticas. Por ejemplo:
 
 - Tiller: https://github.com/markround/tiller Es una buena herramienta pero hace más pesados los contenedores de Docker.
-- Confd: https://github.com/kelseyhightower/confd Es una mejor opción, pero aún así, no es nativa de Docker. Se explica cómo usarla aquí: https://theagileadmin.com/2015/11/12/templating-config-files-in-docker-containers/
+- Confd: https://github.com/kelseyhightower/confd Es una mejor opción, pero aún así, no es nativa de Docker. Se explica cómo usarla aquí: https://theagileadmin.com/2015/11/12/templating-config-files-in-docker-containers/ También aquí: http://www.mricho.com/confd-and-docker-separating-config-and-code-for-containers/
 - Usar el conmando sed para modificar variables. Es una opción menos dependiente de otras librerías ya que lo implementa el mismo desarrollador pero para proyectos grandes puede convertirse en un problema.
 
 Un ejemplo de la última opción sería crear un archivo index.html
