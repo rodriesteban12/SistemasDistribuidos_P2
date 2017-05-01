@@ -344,12 +344,13 @@ http {
 ```
 y la aplicación web simplemente evitaría todo lo relacionado a los args de building.
 ```
-#Dockerfile web del httpd con archivo dinámico
+#Dockerfile web del httpd con archivo ESTÁTICO
 FROM httpd
 ADD index.html /usr/local/apache2/htdocs/index.html
 ```
 
 Se hace build de los contenedores. Esto es particularmente importante ya que no se repetirá la configuración de contenedores web sino que se desplegarán desde una única imagen:
+
 ```
 sudo docker-compose build
 ```
@@ -357,6 +358,7 @@ sudo docker-compose build
   <img src="images/sol1_build.PNG" width="650"/>
 </p>
 Ahora se escalarán los contenedores web a la cantidad necesaria (3) y el proxy de nginx a 1.
+
 ```
 sudo docker-compose scale app=3 proxy=1
 ```
