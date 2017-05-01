@@ -52,20 +52,29 @@ apt-get install nginx -y
 Actualmente el archivo tiene contenido. Este se debe reemplazar completamente por la siguiente configuración:
 
 ``` sh
-worker_processes  3;
-events {
-   worker_connections 1024;
-}
+worker_processes 4;
+ 
+events { worker_connections 1024; }
+ 
 http {
-    upstream servers {
-         server myServerIP_1;
-         server myServerIP_2;
-         server myServerIP_3;
+    sendfile on;
+ 
+    upstream app_servers {
+        server app_1:80;
+        server app_2:80;
+        server app_3:80;
     }
+ 
     server {
-        listen 8080;
+        listen 80;
+ 
         location / {
-              proxy_pass http://servers;
+            proxy_pass         http://app_servers;
+            proxy_redirect     off;
+            proxy_set_header   Host $host;
+            proxy_set_header   X-Real-IP $remote_addr;
+            proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header   X-Forwarded-Host $server_name;
         }
     }
 }
@@ -93,8 +102,74 @@ service iptables save
 
 
 # 2. Soluciones
-Claramente el problema a solucionar trata se enfoca en la parametrización de los contenedores. Todos los contenedores de la capa Web serán básicamente iguales y su única diferencia será el contenido de la página web estática. Desafortunadamente en Docker esto no es tan sencillo como en Vagrant. Por eso adjuntaré algunas de las soluciones que encontré en internet para este problema:
+Realizar templates en Docker no es tan sencillo como en Vagrant. También es complicado simular estrategias para realizar templates sin romper las buenas prácticas de Docker. Por ejemplo, si se usan variables del entorno del contenedor para posteriormente modificar los archivos con el comando sed (simulando templates), tocaría ejecutar en el ENTRYPOINT todos los comandos para reemplazar los parámetros por los argumentos de building y además el comando de ejecución del servicio.
 
 ### 2.1 Parametrizando el contenedor con variables de entorno que modifican el docker-compose
 
+Para servir la página web utilizaré Apache2 (httpd) ya que tiene una configuración muy básica, aunque es un poco pesado.
+
+Descargamos el contenedor que viene con httpd versión 2.4
+```
+sudo docker pull httpd:2.4
+```
+Creamos el archivo Dockerfile para hacer build al nuevo contenedor que contendrá el archivo HTML de la página web.
+
+```
+#Dockerfile del httpd con archivo dinámico
+FROM httpd
+#Recibe el argumento de build llamado ARG1
+ARG ARG1
+#Agrega el index.html base al contenedor
+ADD index.html /usr/local/apache2/htdocs/index.html
+#Modifica el archivo index agregando el argumento al final
+RUN echo "$ARG1" >> /usr/local/apache2/htdocs/index.html
+```
+
+El archivo de index.html es muy básico:
+```
+Hell yeah!
+```
+
+```
+version: '3'
+ 
+services:
+  app_1:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+      args:
+        - ARG1=App1
+    expose:
+      - "80"
+
+  app_2:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+      args:
+        - ARG1=App2
+    expose:
+      - "80"
+
+  app_3:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+      args:
+        - ARG1=App3
+    expose:
+      - "80"
+
+  proxy:
+    build:
+      context:  ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    links:
+      - app_1
+      - app_2
+      - app_3
+```
 
