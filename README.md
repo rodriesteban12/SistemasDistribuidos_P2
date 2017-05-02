@@ -543,34 +543,35 @@ Para la ejecución de los contenedores se tienen 2 opciones:
 - Usar el archivo docker-compose.yml
 - Usar los comandos de docker.
 
+Primero se realiza el build del la aplicación web para no repetirlo múltiples veces. Desde la carpeta sol3:
+```
+sudo docker build -t webapp ./app
+```
+<p align="center">
+  <img src="images/sol3_webappbuild.PNG" width="650"/>
+</p>
+
 **Con docker-compose**
 Se puede ver que en el argumento environment se ubican las variables del entorno que confd usará para renderizar los templates.
 ```
 version: '3'
- 
 services:
   app_1:
-    build:
-      context:  ./app
-      dockerfile: Dockerfile
+    image: webapp
     environment:
       - text=App1
     expose:
       - "5000"
 
   app_2:
-    build:
-      context:  ./app
-      dockerfile: Dockerfile
+    image: webapp
     environment:
       - text=App2
     expose:
       - "5000"
 
   app_3:
-    build:
-      context:  ./app
-      dockerfile: Dockerfile
+    image: webapp
     environment:
       - text=App3
     expose:
@@ -586,6 +587,14 @@ services:
       - app_1
       - app_2
       - app_3
+```
+Se realiza el build del compose:
+```
+sudo docker-compose build
+```
+Y finalmente se montan los servicios:
+```
+sudo docker-compose up
 ```
 Se pueden ver los resultados:
 <p align="center">
