@@ -260,13 +260,7 @@ sudo docker-compose up
 
 Ahora, el puerto que el contenedor de Nginx expone es el puerto 80, pero en mi máquina HOST ya lo tengo ocupado con otro servicio. Por lo tanto, en el docker-compose.yml se hizo binding de este puerto al 8080. Así con localhost:8080 se podrá acceder al servicio de balanceo de cargas que está apuntando a los servicios web:
 <p align="center">
-  <img src="images/sol2_app1.PNG" width="250"/>
-</p>
-<p align="center">
-  <img src="images/sol2_app2.PNG" width="250"/>
-</p>
-<p align="center">
-  <img src="images/sol2_app3.PNG" width="250"/>
+  <img src="images/sol2_app1.PNG" width="250"/> <img src="images/sol2_app2.PNG" width="250"/> <img src="images/sol2_app3.PNG" width="250"/>
 </p>
 Se puede ver que por cada petición se accede al siguiente contenedor web. La razón por la que esto ocurre es que Nginx por default utiliza un algoritmo de balanceo llamado RoundRobin, que no es muy inteligente, pues simplemente distribuye en ciclos las peticiones. Otros algoritmos tienen en cuenta la verdadera carga que cada petición tiene sobre el servidor. Se puede visualizar el RoundRobin en la consola:
 
