@@ -108,17 +108,10 @@ Realizar templates en Docker no es tan sencillo como en Vagrant. Actualmente exi
 - Confd: https://github.com/kelseyhightower/confd Es una mejor opción, pero aún así, no es nativa de Docker. Se explica cómo usarla aquí: https://theagileadmin.com/2015/11/12/templating-config-files-in-docker-containers/ También aquí: http://www.mricho.com/confd-and-docker-separating-config-and-code-for-containers/
 - Usar el conmando sed para modificar variables. Es una opción menos dependiente de otras librerías ya que lo implementa el mismo desarrollador pero para proyectos grandes puede convertirse en un problema.
 
-Un ejemplo de la última opción sería crear un archivo index.html
-```
-Hola soy el archivo HTML {PARAM1}
-```
-y en Dockerfile crear usar --build-arg para modificarlo. También se puede ejecutar esta acción en el ENTRYPOINT pero se caería en la mala práctica de ejecutar múltiples acciones (archivos .sh) en el entrypoint de docker. El archivo debería contener comandos para reemplazar todos los parámetros de los archivos y finalmente el comando que ejecuta el servicio.
-```
-ARG ARG1
-sed "s/ARG1/{PARAM1}/g" index.html
-```
+Se crearon tres soluciones:
+ - Con build args. Parámetros para los contenedores en build-time.
 
-### 2.1 Primera Solución - Repetir contenedores en el docker-compose.yml
+### 2.1 Primera Solución - Con build args:
 
 Para la solución del ejercicio se hará algo más simple. No se intentará manejar el index.html como un template sino que simplemente se agregará contenido al final del archivo con 
 
@@ -196,9 +189,8 @@ http {
 }
 ```
 #### 2.1.3 Compose
-En el compose se exponen los servicios de las tres aplicaciones. No me agrada tener que repetir el servicio por cada contenedor pues no es muy escalable. En todo caso, los servidores web exponen el puerto 80 del servicio HTTPD. Al exponerlos, únicamente otros contenedores del daemon de Docker podrán accederlo. Se parametrizan las diferencias de la página web por medio de la opción de args del build de la versión 3 del docker-compose.
 
-Al final del archivo se crea el servicio de reverse-proxy de Nginx. Lo especial de este servicio es que para poder exponer el balanceo de cargas se hace el binding del puerto 80 de Nginx al puerto 8080 de la máquina host. También que se hace un link hacia las aplicaciones web. Por este link es que en el archivo de configuración de Nginx se puede hacer referencia a las IP's de los contenedores web por medio de su nombre.
+Para esta estrategia, es necesario repetir el build por cada webapp que se quiere desplegar. Esto es porque los build-args modifican el contenedor en build-time. No es una muy buena práctica pero sirve para poder parametrizar los contenedores.
 ```
 version: '3'
  
