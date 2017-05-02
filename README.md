@@ -537,11 +537,7 @@ RUN echo "daemon off;" >> /etc/nginx/nginx.conf
 CMD service nginx start
 ```
 
-##### 2.3.6 Ejecución de los contenedores.
-
-Para la ejecución de los contenedores se tienen 2 opciones:
-- Usar el archivo docker-compose.yml
-- Usar los comandos de docker.
+##### 2.3.6 Docker-compose.yml
 
 Primero se realiza el build del la aplicación web para no repetirlo múltiples veces. Desde la carpeta sol3:
 ```
@@ -551,7 +547,7 @@ sudo docker build -t webapp ./app
   <img src="images/sol3_webappbuild.PNG" width="650"/>
 </p>
 
-**Con docker-compose**
+
 Se puede ver que en el argumento environment se ubican las variables del entorno que confd usará para renderizar los templates.
 ```
 version: '3'
@@ -606,4 +602,3 @@ Se pueden ver los resultados:
 <p align="center">
   <img src="images/sol3_app3.PNG" width="250"/>
 </p>
-
