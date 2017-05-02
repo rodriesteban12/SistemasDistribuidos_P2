@@ -53,21 +53,16 @@ Actualmente el archivo tiene contenido. Este se debe reemplazar completamente po
 
 ``` sh
 worker_processes 4;
- 
 events { worker_connections 1024; }
- 
 http {
     sendfile on;
- 
     upstream app_servers {
         server app_1:80;
         server app_2:80;
         server app_3:80;
     }
- 
     server {
         listen 8080;
-
         location / {
             proxy_pass         http://app_servers;
             proxy_redirect     off;
@@ -167,7 +162,6 @@ events { worker_connections 1024; }
  
 http {
     sendfile on;
- 
     upstream app_servers {
         server app_1:80;
         server app_2:80;
@@ -176,7 +170,6 @@ http {
  
     server {
         listen 80;
- 
         location / {
             proxy_pass         http://app_servers;
             proxy_redirect     off;
@@ -296,26 +289,21 @@ services:
       - "8080:80"
     links:
       - app
-
+      
 ```
 La configuración de nginx es la misma, únicamente se modifica el nombre de los contenedores web ya que tendrán como prefijo la carpeta en la que se encuentra el docker-compose.yml. En este caso sol1 al ser la carpeta de la primera solución:
 ```
 worker_processes 4;
- 
 events { worker_connections 1024; }
- 
 http {
     sendfile on;
- 
     upstream app_servers {
         server sol1_app_1:80;
         server sol1_app_2:80;
         server sol1_app_3:80;
     }
- 
     server {
         listen 80;
- 
         location / {
             proxy_pass         http://app_servers;
             proxy_redirect     off;
@@ -454,7 +442,7 @@ def hello():
     Config.read("variables.conf")
     return 'Hello! {}'.format(
         Config.get("variables", "text"))
-
+        
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)
 ```
@@ -466,11 +454,8 @@ Para eso se crea este archivo de start.sh:
 ```
 #!/bin/bash
 set -e  
-
 export text=${text:-"Default Hello World! Env var was not set! :O"}
-
 /usr/local/bin/confd -onetime -backend env
-
 echo "Starting webpage!"
 exec python app.py
 ```
@@ -487,21 +472,16 @@ La misma cosa que las anteriores, solamente que esta vez la configuración debe 
 Archivo de configuración de Nginx:
 ```
 worker_processes 4;
- 
 events { worker_connections 1024; }
- 
 http {
     sendfile on;
- 
     upstream app_servers {
         server app_1:5000;
         server app_2:5000;
         server app_3:5000;
     }
- 
     server {
         listen 80;
- 
         location / {
             proxy_pass         http://app_servers;
             proxy_redirect     off;
@@ -570,12 +550,9 @@ services:
       - app_2
       - app_3
 ```
-Se realiza el build del compose:
+Se realiza el build del compose, y finalmente se montan los servicios:
 ```
 sudo docker-compose build
-```
-Y finalmente se montan los servicios:
-```
 sudo docker-compose up
 ```
 Se pueden ver los resultados:
