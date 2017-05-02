@@ -553,8 +553,8 @@ services:
     build:
       context:  ./app
       dockerfile: Dockerfile
-      environment:
-        - text=App1
+    environment:
+      - text=App1
     expose:
       - "5000"
 
@@ -562,8 +562,8 @@ services:
     build:
       context:  ./app
       dockerfile: Dockerfile
-      environment:
-        - text=App2
+    environment:
+      - text=App2
     expose:
       - "5000"
 
@@ -571,8 +571,8 @@ services:
     build:
       context:  ./app
       dockerfile: Dockerfile
-      environment:
-        - text=App3
+    environment:
+      - text=App3
     expose:
       - "5000"
 
