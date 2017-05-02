@@ -105,6 +105,8 @@ Realizar templates en Docker no es tan sencillo como en Vagrant. Actualmente exi
 
 Se crearon tres soluciones:
  - Con build args. Parámetros para los contenedores en build-time.
+ - Con docker-compose scale. Permite escalar contenedores pero no permite parametrizarlos.
+ - Con Confd, permite crear templates para archivos de configuración.     
 
 ### 2.1 Primera Solución - Con build args:
 
@@ -157,9 +159,7 @@ Se hace referencia a las aplicaciones por medio de los links del compose.
 En el upstream se agrega el puerto 80 de los contenedores web ya que el servicio es el httpd, que por default se expone en el puerto 80.
 ```
 worker_processes 4;
- 
 events { worker_connections 1024; }
- 
 http {
     sendfile on;
     upstream app_servers {
@@ -167,7 +167,6 @@ http {
         server app_2:80;
         server app_3:80;
     }
- 
     server {
         listen 80;
         location / {
