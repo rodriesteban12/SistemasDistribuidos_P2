@@ -372,3 +372,218 @@ Y finalmente se puede acceder a la página por medio del puerto 8080:
 <p align="center">
   <img src="images/sol1_result.PNG" width="650"/>
 </p>
+
+### 2.3 Tercera solución - Usando Confd para hacer templates
+
+Confd es una herramienta que permite enviar variables del entorno al contenedor con el fin de llenar archivos de configuración como templates. En este caso usaré Flask como el server de la página index.html.
+
+Con Confd básicamente se crean dos archivos por cada template:
+
+- El archivo de template que llama las variables del entorno con {{ getenv "nombreVariableEntorno" }}. Ejemplo: archivo.conf
+- El archivo de gestión del template. Encargado de especificar cómo se debe llenar el template y en dónde se ubica posteriormente. Ejemplo: archivo.conf.toml
+
+También es necesario crear el ejecutable que se usará como entrypoint del contenedor. Este ejecutable tiene 2 responsabilidades. Ejemplo, srtart.sh: 
+
+- Llamar los comandos encargados de ligar las variables del entorno a los templates.
+- Ejecutar el servicio final del contenedor. En este caso es el servicio de Flask que atiende las peticiones HTTP.
+
+¿Por qué Confd? Porque para proyectos grandes es mucho más modular y mantenible que las técnicas comunes que constan en reemplazar el texto de los archivos de configuración con el comando sed.
+
+A continuación se muestra la estructura de árbol de la carpeta de la tercera solución:
+
+```
+.
+├── Dockerfile
+└── files
+    ├── app.py #Aplicación de Flask corriendo en el puerto 5000. Llama los templates de configuración tras ser instanciados.
+    ├── confd
+    │   ├── conf.d #Guarda los archivos que gestionan los templates.
+    │   │   └── variables.conf.toml
+    │   └── templates #Guarda los templates que llaman las variables del entorno.
+    │       └── variables.conf
+    ├── requirements.txt
+    └── start.sh # Es el entrypoint del contenedor. Inicia Flask y renderiza los templates.
+```
+
+##### 2.3.1 Dockerfile
+- Aquí se usa la carpeta /app como workdir y se obtiene confd directamente del repositorio.
+- Confd se ubica en la carpeta /usr/local/bin/confd y será llamado por el archivo start.sh
+- Se agrega todo el contenido de templates y gestores de templates en /etc/confd
+```
+#Es bastante pesado. No supe como ejecutar un .sh con el alpine.
+FROM python:3.4
+
+WORKDIR /app
+
+#Agregar codigo y dependencias de python:
+ADD files/app.py /app/app.py
+ADD files/requirements.txt /app/requirements.txt
+
+#Instalar y ubicar Confd:
+ADD https://github.com/kelseyhightower/confd/releases/download/v0.10.0/confd-0.10.0-linux-amd64 /usr/local/bin/confd
+ADD files/start.sh /app/start.sh
+RUN chmod +x /usr/local/bin/confd /app/start.sh
+ADD files/confd /etc/confd
+
+RUN pip install -r requirements.txt
+
+CMD ["/app/start.sh"]
+```
+
+##### 2.3.2 El template
+Es un template muy básico. Asigna la variable del entorno a la variable del archivo llamada text.
+```
+ [variables]
+ text: {{ getenv "text" }}
+```
+
+##### 2.3.3 El gestor del template
+Aquí únicamente uso dos opciones de configuración:
+- src: qué template se renderizará.
+- dest: a dónde se enviará el template renderizado. Se envía a /app/variables.conf en donde será leido por la aplicación de Flask.
+```
+[template]
+src = "variables.conf"
+dest = "/app/variables.conf"
+```
+
+##### 2.3.4 Aplicación de Flask
+
+En este caso se usa una aplicación de Flask para obtener la configuración del archivo variables.conf.
+Para esto es neceario tener la dependencia de configparser. En Python2 se llama ConfigParser.
+La aplicación:
+ - Lee el archivo variables.conf
+ - Del contexto variables obtiene la variable text y envía la respuesta.
+```
+from flask import Flask
+from redis import Redis
+import os
+import configparser
+
+app = Flask(__name__)
+
+@app.route('/')
+def hello():
+    Config = configparser.ConfigParser()
+    Config.read("variables.conf")
+    return 'Hello! {}'.format(
+        Config.get("variables", "text"))
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", debug=True)
+```
+
+##### 2.3.5 start.sh
+Pero cómo se le dice al confd que renderice los templates y los envíe a las ubicaciones definidas en sus archivos de gestión correspondientes?
+
+Para eso se crea este archivo de start.sh:
+```
+#!/bin/bash
+set -e  
+
+export text=${text:-"Default Hello World! Env var was not set! :O"}
+
+/usr/local/bin/confd -onetime -backend env
+
+echo "Starting webpage!"
+exec python app.py
+```
+El archivo permite agregar valores default a las variables del entorno en caso de que no sean seteadas al correr el contenedor.
+Con el flag de -backend env le estamos diciendo a confd que las variables de los templates las adquirirá de las variables del entorno del contenedor. Esto es necesario ya que confd es una herramienta muy potente que también permite obtener las variables de los templates de bases de datos de Llave/Valor. En este caso es mejor trabajar con variables del entorno por la poca complejidad.
+
+Finalmente el archivo ejecuta la aplicación de python.
+
+TODAVÍA FALTA POR RESPONDER: ¿En dónde ubico las variables del entorno para cada contenedor? Más adelante después del balanceador de cargas.
+
+##### 2.3.5 Balanceador de cargas.
+La misma cosa que las anteriores, solamente que esta vez la configuración debe apuntar al puerto 5000 del servicio de flask de cada contenedor.
+
+Archivo de configuración de Nginx:
+```
+worker_processes 4;
+ 
+events { worker_connections 1024; }
+ 
+http {
+    sendfile on;
+ 
+    upstream app_servers {
+        server app_1:5000;
+        server app_2:5000;
+        server app_3:5000;
+    }
+ 
+    server {
+        listen 80;
+ 
+        location / {
+            proxy_pass         http://app_servers;
+            proxy_redirect     off;
+            proxy_set_header   Host $host;
+            proxy_set_header   X-Real-IP $remote_addr;
+            proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header   X-Forwarded-Host $server_name;
+        }
+    }
+}
+```
+
+Archivo Dockerfile de contenedor de Nginx. Es idéntico a los demás:
+```
+FROM nginx
+RUN rm /etc/nginx/conf.d/default.conf && rm -r /etc/nginx/conf.d
+ADD nginx.conf /etc/nginx/nginx.conf
+RUN echo "daemon off;" >> /etc/nginx/nginx.conf
+CMD service nginx start
+```
+
+##### 2.3.6 Ejecución de los contenedores.
+
+Para la ejecución de los contenedores se tienen 2 opciones:
+- Usar el archivo docker-compose.yml
+- Usar los comandos de docker.
+
+**Con docker-compose**
+Se puede ver que en el argumento environment se ubican las variables del entorno que confd usará para renderizar los templates.
+```
+version: '3'
+ 
+services:
+  app_1:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+    environment:
+      - text=App1
+    expose:
+      - "5000"
+
+  app_2:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+    environment:
+      - text=App2
+    expose:
+      - "5000"
+
+  app_3:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+    environment:
+      - text=App3
+    expose:
+      - "5000"
+
+  proxy:
+    build:
+      context:  ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    links:
+      - app_1
+      - app_2
+      - app_3
+```
