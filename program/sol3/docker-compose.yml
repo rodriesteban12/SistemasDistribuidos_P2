@@ -1,6 +1,41 @@
 version: '3'
+ 
 services:
-  web:
-    build: ./web
+  app_1:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+    environment:
+      - text=App1
+    expose:
+      - "5000"
+
+  app_2:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+    environment:
+      - text=App2
+    expose:
+      - "5000"
+
+  app_3:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+    environment:
+      - text=App3
+    expose:
+      - "5000"
+
+  proxy:
+    build:
+      context:  ./nginx
+      dockerfile: Dockerfile
     ports:
-     - "5000:5000"
+      - "8080:80"
+    links:
+      - app_1
+      - app_2
+      - app_3
+
