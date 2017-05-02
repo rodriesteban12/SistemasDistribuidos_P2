@@ -362,7 +362,7 @@ Ahora quedó desplegado el servicio:
 Y finalmente se puede acceder a la página por medio del puerto 8080:
 
 <p align="center">
-  <img src="images/sol1_result.PNG" width="650"/>
+  <img src="images/sol1_result.PNG" width="250"/>
 </p>
 
 ### 2.3 Tercera solución - Usando Confd para hacer templates
