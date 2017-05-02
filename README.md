@@ -395,10 +395,103 @@ A continuación se muestra la estructura de árbol de la carpeta de la tercera s
 └── files
     ├── app.py #Aplicación de Flask corriendo en el puerto 5000. Llama los templates de configuración tras ser instanciados.
     ├── confd
-    │   ├── conf.d
+    │   ├── conf.d #Guarda los archivos que gestionan los templates.
     │   │   └── variables.conf.toml
-    │   └── templates
+    │   └── templates #Guarda los templates que llaman las variables del entorno.
     │       └── variables.conf
     ├── requirements.txt
-    └── start.sh
+    └── start.sh # Es el entrypoint del contenedor. Inicia Flask y renderiza los templates.
 ```
+
+##### 2.3.1 Dockerfile
+- Aquí se usa la carpeta /app como workdir y se obtiene confd directamente del repositorio.
+- Confd se ubica en la carpeta /usr/local/bin/confd y será llamado por el archivo start.sh
+- Se agrega todo el contenido de templates y gestores de templates en /etc/confd
+```
+#Es bastante pesado. No supe como ejecutar un .sh con el alpine.
+FROM python:3.4
+
+WORKDIR /app
+
+#Agregar codigo y dependencias de python:
+ADD files/app.py /app/app.py
+ADD files/requirements.txt /app/requirements.txt
+
+#Instalar y ubicar Confd:
+ADD https://github.com/kelseyhightower/confd/releases/download/v0.10.0/confd-0.10.0-linux-amd64 /usr/local/bin/confd
+ADD files/start.sh /app/start.sh
+RUN chmod +x /usr/local/bin/confd /app/start.sh
+ADD files/confd /etc/confd
+
+RUN pip install -r requirements.txt
+
+CMD ["/app/start.sh"]
+```
+
+##### 2.3.2 El template
+Es un template muy básico. Asigna la variable del entorno a la variable del archivo llamada text.
+```
+ [variables]
+ text: {{ getenv "text" }}
+```
+
+##### 2.3.3 El gestor del template
+Aquí únicamente uso dos opciones de configuración:
+- src: qué template se renderizará.
+- dest: a dónde se enviará el template renderizado. Se envía a /app/variables.conf en donde será leido por la aplicación de Flask.
+```
+[template]
+src = "variables.conf"
+dest = "/app/variables.conf"
+```
+
+##### 2.3.4 Aplicación de Flask
+
+En este caso se usa una aplicación de Flask para obtener la configuración del archivo variables.conf.
+Para esto es neceario tener la dependencia de configparser. En Python2 se llama ConfigParser.
+La aplicación:
+ - Lee el archivo variables.conf
+ - Del contexto variables obtiene la variable text y envía la respuesta.
+```
+from flask import Flask
+from redis import Redis
+import os
+import configparser
+
+app = Flask(__name__)
+
+@app.route('/')
+def hello():
+    Config = configparser.ConfigParser()
+    Config.read("variables.conf")
+    return 'Hello! {}'.format(
+        Config.get("variables", "text"))
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", debug=True)
+```
+
+##### 2.3.4 start.sh
+Pero cómo se le dice al confd que renderice los templates y los envíe a las ubicaciones definidas en sus archivos de gestión correspondientes?
+
+Para eso se crea este archivo de start.sh:
+```
+#!/bin/bash
+set -e  
+
+export text=${text:-"Default Hello World! Env var was not set! :O"}
+
+/usr/local/bin/confd -onetime -backend env
+
+echo "Starting webpage!"
+exec python app.py
+```
+El archivo permite agregar valores default a las variables del entorno en caso de que no sean seteadas al correr el contenedor.
+Con el flag de -backend env le estamos diciendo a confd que las variables de los templates las adquirirá de las variables del entorno del contenedor. Esto es necesario ya que confd es una herramienta muy potente que también permite obtener las variables de los templates de bases de datos de Llave/Valor. En este caso es mejor trabajar con variables del entorno por la poca complejidad.
+
+Finalmente el archivo ejecuta la aplicación de python.
+
+TODAVÍA FALTA POR RESPONDER: ¿En dónde ubico las variables del entorno para cada contenedor? Más adelante después del balanceador de cargas.
+
+
+
