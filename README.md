@@ -364,5 +364,11 @@ sudo docker-compose scale app=3 proxy=1
 ```
 Ahora quedó desplegado el servicio:
 <p align="center">
-  <img src="images/sol1_scale.PNG" width="650"/>
+  <img src="images/sol1_scales.PNG" width="650"/>
+</p>
+
+Y finalmente se puede acceder a la página por medio del puerto 8080:
+
+<p align="center">
+  <img src="images/sol1_result.PNG" width="650"/>
 </p>
