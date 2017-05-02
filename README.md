@@ -587,3 +587,14 @@ services:
       - app_2
       - app_3
 ```
+Se pueden ver los resultados:
+<p align="center">
+  <img src="images/sol3_app1.PNG" width="650"/>
+</p>
+<p align="center">
+  <img src="images/sol3_app2.PNG" width="650"/>
+</p>
+<p align="center">
+  <img src="images/sol3_app3.PNG" width="650"/>
+</p>
+
