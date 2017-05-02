@@ -387,6 +387,8 @@ También es necesario crear el ejecutable que se usará como entrypoint del cont
 - Llamar los comandos encargados de ligar las variables del entorno a los templates.
 - Ejecutar el servicio final del contenedor. En este caso es el servicio de Flask que atiende las peticiones HTTP.
 
+¿Por qué Confd? Porque para proyectos grandes es mucho más modular y mantenible que las técnicas comunes que constan en reemplazar el texto de los archivos de configuración con el comando sed.
+
 A continuación se muestra la estructura de árbol de la carpeta de la tercera solución:
 
 ```
@@ -471,7 +473,7 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)
 ```
 
-##### 2.3.4 start.sh
+##### 2.3.5 start.sh
 Pero cómo se le dice al confd que renderice los templates y los envíe a las ubicaciones definidas en sus archivos de gestión correspondientes?
 
 Para eso se crea este archivo de start.sh:
@@ -493,5 +495,55 @@ Finalmente el archivo ejecuta la aplicación de python.
 
 TODAVÍA FALTA POR RESPONDER: ¿En dónde ubico las variables del entorno para cada contenedor? Más adelante después del balanceador de cargas.
 
+##### 2.3.5 Balanceador de cargas.
+La misma cosa que las anteriores, solamente que esta vez la configuración debe apuntar al puerto 5000 del servicio de flask de cada contenedor.
 
+Archivo de configuración de Nginx:
+```
+worker_processes 4;
+ 
+events { worker_connections 1024; }
+ 
+http {
+    sendfile on;
+ 
+    upstream app_servers {
+        server app_1:5000;
+        server app_2:5000;
+        server app_3:5000;
+    }
+ 
+    server {
+        listen 80;
+ 
+        location / {
+            proxy_pass         http://app_servers;
+            proxy_redirect     off;
+            proxy_set_header   Host $host;
+            proxy_set_header   X-Real-IP $remote_addr;
+            proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header   X-Forwarded-Host $server_name;
+        }
+    }
+}
+```
 
+Archivo Dockerfile de contenedor de Nginx. Es idéntico a los demás:
+```
+FROM nginx
+RUN rm /etc/nginx/conf.d/default.conf && rm -r /etc/nginx/conf.d
+ADD nginx.conf /etc/nginx/nginx.conf
+RUN echo "daemon off;" >> /etc/nginx/nginx.conf
+CMD service nginx start
+```
+
+##### 2.3.6 Ejecución de los contenedores.
+
+Para la ejecución de los contenedores se tienen 2 opciones:
+- Usar el archivo docker-compose.yml
+- Usar los comandos de docker.
+
+**Con docker-compose**
+```
+
+```
