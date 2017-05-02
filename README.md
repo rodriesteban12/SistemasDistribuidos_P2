@@ -372,3 +372,33 @@ Y finalmente se puede acceder a la página por medio del puerto 8080:
 <p align="center">
   <img src="images/sol1_result.PNG" width="650"/>
 </p>
+
+### 2.3 Tercera solución - Usando Confd para hacer templates
+
+Confd es una herramienta que permite enviar variables del entorno al contenedor con el fin de llenar archivos de configuración como templates. En este caso usaré Flask como el server de la página index.html.
+
+Con Confd básicamente se crean dos archivos por cada template:
+
+- El archivo de template que llama las variables del entorno con {{ getenv "nombreVariableEntorno" }}. Ejemplo: archivo.conf
+- El archivo de gestión del template. Encargado de especificar cómo se debe llenar el template y en dónde se ubica posteriormente. Ejemplo: archivo.conf.toml
+
+También es necesario crear el ejecutable que se usará como entrypoint del contenedor. Este ejecutable tiene 2 responsabilidades. Ejemplo, srtart.sh: 
+
+- Llamar los comandos encargados de ligar las variables del entorno a los templates.
+- Ejecutar el servicio final del contenedor. En este caso es el servicio de Flask que atiende las peticiones HTTP.
+
+A continuación se muestra la estructura de árbol de la carpeta de la tercera solución:
+
+```
+.
+├── Dockerfile
+└── files
+    ├── app.py #Aplicación de Flask corriendo en el puerto 5000. Llama los templates de configuración tras ser instanciados.
+    ├── confd
+    │   ├── conf.d
+    │   │   └── variables.conf.toml
+    │   └── templates
+    │       └── variables.conf
+    ├── requirements.txt
+    └── start.sh
+```
