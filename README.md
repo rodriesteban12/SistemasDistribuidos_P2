@@ -580,11 +580,5 @@ sudo docker-compose up
 ```
 Se pueden ver los resultados:
 <p align="center">
-  <img src="images/sol3_app1.PNG" width="250"/>
-</p>
-<p align="center">
-  <img src="images/sol3_app2.PNG" width="250"/>
-</p>
-<p align="center">
-  <img src="images/sol3_app3.PNG" width="250"/>
+  <img src="images/sol3_app1.PNG" width="250"/> <img src="images/sol3_app2.PNG" width="250"/> <img src="images/sol3_app3.PNG" width="250"/>
 </p>
