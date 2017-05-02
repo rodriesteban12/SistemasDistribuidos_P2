@@ -544,6 +544,46 @@ Para la ejecución de los contenedores se tienen 2 opciones:
 - Usar los comandos de docker.
 
 **Con docker-compose**
+Se puede ver que en el argumento environment se ubican las variables del entorno que confd usará para renderizar los templates.
 ```
+version: '3'
+ 
+services:
+  app_1:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+      environment:
+        - text=App1
+    expose:
+      - "5000"
 
+  app_2:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+      environment:
+        - text=App2
+    expose:
+      - "5000"
+
+  app_3:
+    build:
+      context:  ./app
+      dockerfile: Dockerfile
+      environment:
+        - text=App3
+    expose:
+      - "5000"
+
+  proxy:
+    build:
+      context:  ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    links:
+      - app_1
+      - app_2
+      - app_3
 ```
